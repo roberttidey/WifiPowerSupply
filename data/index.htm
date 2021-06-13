@@ -20,19 +20,39 @@
 			<div class = "row">
 				<div class = "col s12">
 					<ul class = "tabs">
-						<li class = "tab col s4"><a class = "active" href = "#capture">Main</a></li>
-						<li class = "tab col s4"><a href = "#status">Status</a></li>
-						<li class = "tab col s4 "><a href = "#config">Config</a></li>
+						<li class = "tab col s3"><a class = "active" href = "#main">Main</a></li>
+						<li class = "tab col s3"><a href = "#files">Files</a></li>
+						<li class = "tab col s3"><a href = "#status">Status</a></li>
+						<li class = "tab col s3 "><a href = "#config">Config</a></li>
 					</ul>
 				</div>
          
-				<div id = "capture" class = "tab col s12">
-					<div id = "captureTable" class = "tab col s12"></div>
+				<div id="main" class="tab col s12" style="overflow-y:auto;">
+					<BR>
 					<div>
-						Capture Filename&nbsp&nbsp<input id="filename" style="width:200px;height:24px">
+						<textarea id="meter" class="meter" cols='10' rows='2'>
+						</textarea>
 					</div>
-					<a class="btn green" id="sendVolts" style="width:200px;height:24px">Send Volts</a>&nbsp&nbsp
-					<a class="btn green" id="captureDATA" style="width:200px;height:24px">Capture DATA</a> 
+					<div>
+						<a class="btn green" id="sendVolts" style="width:180px;height:24px">Set Volts</a>
+						&nbsp&nbsp<input id="setVoltval" value="3.3" style="width:100px;height:24px">
+					</div>
+					<div>
+						<a class="btn green" id="sendLimit" style="width:180px;height:24px">Set I Limit</a>
+						&nbsp&nbsp<input id="setLimitval" value="0.750" style="width:100px;height:24px">
+					</div>
+				</div>
+				<div id="files" class="tab col s12" style="overflow-y:auto;">
+					<BR>
+					<div id = "dataTable" class = "tab col s12"></div>
+					<div>
+						Data Filename&nbsp&nbsp<input id="filename" style="width:200px;height:24px">
+					</div>
+					<div>
+						<a class="btn green" id="captureDATA" style="width:120px;height:24px">Capture</a>&nbsp&nbsp 
+						<a class="btn green" id="playDATA" style="width:120px;height:24px">Play</a>&nbsp&nbsp 
+						<a class="btn green" id="stop" style="width:120px;height:24px">Stop</a> 
+					</div>
 				</div>
 				<div id = "status" class = "tab col s12"></div>
 				<div id = "config" class = "tab col s12">
@@ -82,6 +102,14 @@
 			.tab {
 				overflow-x:hidden;
 			}
+			.meter {
+				background: blue;
+				color: white;
+				font-size: 48px;
+				width:220px;
+				height:160px;
+				resize: none;
+			}
 		</style>
 	
 		<!--Import jQuery before materialize.js-->
@@ -91,9 +119,9 @@
 $(function(){
 	var host = window.location.hostname;
 	var configTitles = 'Parameter,Value';
-	var captureTitles = 'Filename,Download,Delete';
+	var dataTitles = 'Filename,Download,Delete';
 	var statusTitles = 'Parameter,Value';
-	var captureFileCount = -1;
+	var dataFileCount = -1;
 	var lastStatus = '';
 	
 	// ******************************************************************
@@ -104,27 +132,27 @@ $(function(){
 		loadStatus();
 	}
 		
-	function loadCaptures() {
-		// Load Captures
-		$.get("http://" + host + "/getcapturefiles", function(data) {
-			var captureTable_html = '<table id="captureFiles"><thead><tr>';
+	function loadDataFiles() {
+		// Load Data files
+		$.get("http://" + host + "/getdatafiles", function(data) {
+			var dataTable_html = '<table id="dataFiles"><thead><tr>';
 			var i;
-			var captureFields = [];
-			captureFields = captureTitles.split(",");
-			for(i=0; i< captureFields.length; i++) captureTable_html += '<th>' + captureFields[i] + '</th>';
-			captureTable_html += '</thead></tr><tbody>';
+			var dataFields = [];
+			dataFields = dataTitles.split(",");
+			for(i=0; i< dataFields.length; i++) dataTable_html += '<th>' + dataFields[i] + '</th>';
+			dataTable_html += '</thead></tr><tbody>';
 			if(data.length) {
-				captureFields = data.split("<BR>");
-				for(i=0; i < captureFields.length; i++) {
-					if(captureFields[i] != "") {
-						captureTable_html += '<tr><td><a href="http://' + host + '/' + captureFields[i] + '">' + captureFields[i] + '</a></td>';
-						captureTable_html += '<td><a href="http://' + host + '/' + captureFields[i] + '" class="btn green" download style="width:10px;height:10px"></a></td>';
-						captureTable_html += '<td><a name="' + captureFields[i] + '" class="btn red" id="delete" style="width:10px;height:10px"></a></td></tr>';
+				dataFields = data.split("<BR>");
+				for(i=0; i < dataFields.length; i++) {
+					if(dataFields[i] != "") {
+						dataTable_html += '<tr><td><a href="http://' + host + '/' + dataFields[i] + '">' + dataFields[i] + '</a></td>';
+						dataTable_html += '<td><a href="http://' + host + '/' + dataFields[i] + '" class="btn green" download style="width:10px;height:10px"></a></td>';
+						dataTable_html += '<td><a name="' + dataFields[i] + '" class="btn red" id="delete" style="width:10px;height:10px"></a></td></tr>';
 					}
 				}
 			}
-			captureTable_html += '</table>';
-			$('#captureTable').html(captureTable_html);
+			dataTable_html += '</table>';
+			$('#dataTable').html(dataTable_html);
 		});
 	}
 	
@@ -165,6 +193,8 @@ $(function(){
 				var statusFields = [];
 				var key;
 				var measureEl;
+				var volts;
+				var amps;
 				
 				statusFields = statusTitles.split(",");
 				for(i=0; i< statusFields.length; i++) status_html += '<th>' + statusFields[i] + '</th>';
@@ -180,16 +210,23 @@ $(function(){
 							status_html += '<td>' + statusFields[1] + '</td>'; 
 							status_html += '</tr>';
 						}
-						if(key == 'captureFileCount') {
-							if(statusFields[1] != captureFileCount) {
-								captureFileCount = statusFields[1];
-								loadCaptures();
+						if(key == 'Volts') {
+							volts = statusFields[1];
+						}
+						if(key == 'Amps') {
+							amps = statusFields[1];
+						}
+						if(key == 'dataFileCount') {
+							if(statusFields[1] != dataFileCount) {
+								dataFileCount = statusFields[1];
+								loadDataFiles();
 							}
 						}
 					}
 				});
 				status_html += '</table>';
 				$('#status').html(status_html);
+				document.getElementById('meter').value = volts + " V\n" + amps + " A";
 			}
 		});
 	}
@@ -216,7 +253,7 @@ $(function(){
 		$.get("http://" + host + "/saveconfig", {'config':config} );
 	}
 	
-	$("#capture").on("click", "#delete", function() {
+	$("#files").on("click", "#delete", function() {
 		var btn = $(this);
 		var path;
 		path = "http://" + host + "/edit?n=/" + btn["0"].name;
@@ -225,24 +262,38 @@ $(function(){
 			type: 'DELETE',
 			success: function(result) {}
 		});
-		captureFileCount = -1;
+		deleteFileCount = -1;
 	});
 
-	$("#capture").on("click", "#sendVolts", function() {
+	$("#main").on("click", "#sendVolts", function() {
 		var btn = $(this);
-		capture(1);
+		command(1, document.getElementById('setVoltval').value);
 	});
 	
-	$("#capture").on("click", "#captureDATA", function() {
+	$("#main").on("click", "#sendLimit", function() {
 		var btn = $(this);
-		capture(2);
+		command(2, document.getElementById('setLimitval').value);
 	});
 	
-	function capture(type) {
+	$("#files").on("click", "#captureDATA", function() {
+		var btn = $(this);
 		var filename = document.getElementById('filename').value;
-		var i = filename.indexOf('-cap.txt');
-		if(filename.length && (i < 0 || i != (filename.length - 8))) filename += '-cap.txt';
-		$.get("http://" + host + "/capture", {'filename':filename,capturetype:type} );
+		command(3, filename);
+	});
+	
+	$("#files").on("click", "#playDATA", function() {
+		var btn = $(this);
+		var filename = document.getElementById('filename').value;
+		command(4, filename);
+	});
+	
+	$("#files").on("click", "#stop", function() {
+		var btn = $(this);
+		command(5, "");
+	});
+	
+	function command(type, value) {
+		$.get("http://" + host + "/command", {'parameter':value,command:type} );
 	}
 	
 	function refresh(updateRate) {

@@ -1,7 +1,6 @@
 # Wifi Power supply
 Lab power supply fed from laptop power brick
 
-Work in progress
 
 https://github.com/roberttidey/
 
@@ -12,6 +11,14 @@ https://github.com/roberttidey/
 - ESP8266 + ADS1115 (ADC) + 2 MCP4725 (DAC)
 - Rotary encoders for voltage and current limit setting
 - Web server allows for remote control, management and advanced functions
+
+## Libraries
+- BaseSupport available at https://github.com/roberttidey/BaseSupport
+- RotaryEncoderArray available at https://github.com/roberttidey/RotaryEncoderButton/tree/master/libraries
+- Esp8266 and esp32 oled driver for ssd1306 displays
+- Adafruit_ADS1X15
+- Adafruit_MCP4725
+
 
 
 

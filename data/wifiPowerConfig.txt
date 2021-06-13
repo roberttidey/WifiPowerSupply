@@ -1,6 +1,6 @@
 #Config file for caliper
 # lines are host;timeInterval;displayInterval;adcVSlope;adcVOffset;adcASlope;adcAOffset
-# dacVSlope;dacVOffset;dacLSlope;dacLOffset;fanControl (th1:spd1,th2:spd2,th3:sp3);
+# dacVSlope;dacVOffset;dacLSlope;dacLOffset;fanControl (th1:spd1,th2:spd2,th3:sp3);captureDuration
 powerMeter
 10
 500
@@ -8,8 +8,11 @@ powerMeter
 0
 2000
 32
-2307
-1250
-6235
-33
+#2307
+#1250
+1995
+831100
+6605
+-230000
 0,0,1000,400,2500,500
+30000
