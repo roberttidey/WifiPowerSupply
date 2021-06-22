@@ -57,6 +57,7 @@ int fanControls[6] = {0,0,1000,400,2500,500};
 int rotaryPos[2] = {ROTARYINITV,ROTARYINITI};
 String dataPrefix = "data";
 String strConfig;
+bool adsOK = false;
 
 #define COMMAND_ST_IDLE			0
 #define COMMAND_ST_STARTCAP		1
@@ -314,12 +315,14 @@ void updateControls() {
 }
 
 void updateRealTime() {
-	ads.setGain(GAIN_TWO); // 2.048V = 32768
-	measures[M_VOLTS] = ((adcConversion[ADC_V_SLOPE] * (ads.readADC_Differential_0_1() - adcConversion[ADC_V_OFFSET])) >> 4) / 100;
-	if(measures[M_VOLTS] < 0) measures[M_VOLTS] = 0;
-	ads.setGain(GAIN_EIGHT); //0.512V = 32768
-	measures[M_AMPS] = ((adcConversion[ADC_A_SLOPE] * (ads.readADC_Differential_2_3() - adcConversion[ADC_A_OFFSET])) >> 6) / 100;
-	if(measures[M_AMPS] < 0) measures[M_AMPS] = 0;
+	if(adsOK) {
+		ads.setGain(GAIN_TWO); // 2.048V = 32768
+		measures[M_VOLTS] = ((adcConversion[ADC_V_SLOPE] * (ads.readADC_Differential_0_1() - adcConversion[ADC_V_OFFSET])) >> 4) / 100;
+		if(measures[M_VOLTS] < 0) measures[M_VOLTS] = 0;
+		ads.setGain(GAIN_EIGHT); //0.512V = 32768
+		measures[M_AMPS] = ((adcConversion[ADC_A_SLOPE] * (ads.readADC_Differential_2_3() - adcConversion[ADC_A_OFFSET])) >> 6) / 100;
+		if(measures[M_AMPS] < 0) measures[M_AMPS] = 0;
+	}
 	measures[M_LIMIT] = (rotaryPos[1] * 10000 - dacConversion[DAC_L_OFFSET]) / dacConversion[DAC_L_SLOPE];
 	updateDisplay(makeValString(measures[M_VOLTS])+" Volts",makeValString(measures[M_AMPS])+" Amps",makeValString(measures[M_LIMIT])+" Limit");
 	updateFan();
@@ -511,7 +514,7 @@ void setupEnd() {
 		updateDisplay("Power Supply", "No network","local mode");
 	}
 	startup = 1;
-	ads.begin();
+	adsOK = ads.begin();
 	rotaryEncoderInit(1);
 	setRotaryEncoderPins(0, ROTARY1A, ROTARY1B, -1);
 	setRotaryEncoderPins(1, ROTARY2A, ROTARY2B, -1);
