@@ -355,6 +355,8 @@ void refresh() {
 			case COMMAND_ST_STARTPLAY :
 				playPosition = 0;
 				dataRecord = 0;
+				nextPlayTime = 0;
+				dataStartTime = millis();
 				commandState = COMMAND_ST_ACTIVEPLAY;
 				break;
 			case COMMAND_ST_ACTIVEPLAY :
